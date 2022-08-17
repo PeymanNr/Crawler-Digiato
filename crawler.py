@@ -1,19 +1,25 @@
 import requests
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
-from config import LINK
-from config import category_name
+from storage import MongoStorage, FileStorage
+from config import category_name, storage_neme, LINK
 
 
 class CrawlerBase(ABC):
 
+    @property
+    def storage_set(self):
+        if storage_neme == 'file':
+           return FileStorage()
+        return MongoStorage()
+
     @abstractmethod
-    def start(self):
+    def start(self, store):
         pass
 
-    # @abstractmethod
-    # def store(self):
-    #     pass
+    @abstractmethod
+    def store(self, data, filename=None):
+        pass
 
     def get_page(self, url, start=0):
         response = requests.get(url + str(start))
@@ -50,10 +56,18 @@ class LinkCrawler(CrawlerBase):
             start += 1
         return adv_links
 
-    def start(self):
+    def start(self, store=True):
+        list_href = list()
         for cat in self.category:
             links = self.get_category_links(self.link.format(cat))
-            print(f'{cat} total {len(links)} ')
+            # print(f'{cat} total {len(links)} ')
+            list_href.extend(links)
+            # print(list_href)
+        self.store([li.get('href') for li in list_href])
+
+
+    def store(self, data, *args):
+        self.storage_set.store(data, 'data_links')
 
 
 class DataCrawler(CrawlerBase):
