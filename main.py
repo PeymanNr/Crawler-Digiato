@@ -1,12 +1,11 @@
-from crawler import LinkCrawler
-from config import LINK, category_name
+import sys
+from crawler import LinkCrawler, DataCrawler
 
-# if __name__ == '__main__':
-     ###select and type category in  search
-p = LinkCrawler()
-result = p.start()
-    # print(result)
-# if sys.argv[1] == 'create_tables':
-    #     create_tables()
-    # elif sys.argv[1] == 'run':
-    #     run()
+if __name__ == '__main__':
+    switch = sys.argv[1]
+    if switch == 'find_link':
+        p = LinkCrawler()
+        p.start()
+    elif switch == 'save_data':
+        p = DataCrawler()
+        p.start()
