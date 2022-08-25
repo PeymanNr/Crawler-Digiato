@@ -38,7 +38,7 @@ class LinkCrawler(CrawlerBase):
         links = list()
         soup = BeautifulSoup(html_doc, 'html.parser')
         for li in soup.find_all('a', attrs={'class': 'rowCard__title'}):
-                links.append([{"url": li.get('href'), 'flag': False}])
+            links.append(li)
         return links
 
     def get_category_links(self, url):
@@ -47,7 +47,6 @@ class LinkCrawler(CrawlerBase):
         start = 1
         while crawl:
             response = self.get_page(url, start)
-            # print(response.status_code)
             if response is None:
                 crawl = False
                 continue
@@ -63,10 +62,12 @@ class LinkCrawler(CrawlerBase):
         for cat in self.category:
             links = self.get_category_links(self.link.format(cat))
             list_href.extend(links)
-            if store:
-                self.store(list_href, 'data')
-    def store(self, data, filename):
-        self.storage_set.store(data, 'data')
+        if store:
+            self.store([{"url": li.get('href'), 'flag': False} for li in list_href])
+        return list_href
+
+    def store(self, data, *args):
+        self.storage_set.store(data, 'adv_links')
 
 
 class DataCrawler(CrawlerBase):
@@ -79,23 +80,13 @@ class DataCrawler(CrawlerBase):
         return self.storage_set.load()
 
     def start(self, store=True):
-        data_list = list()
-        url_list = list()
         for p in self.link:
-            data_list.extend(p)
-            for u in data_list:
-                url_list.append(u['url'])
-        mylist = list(set(url_list))
-        print(len(mylist))
-        print(len(url_list))
-        for i in mylist:
-            response = requests.get(i)
-            # print(response.status_code)
+            response = requests.get(p['url'])
             data = self.parser.Parser_links(response.text)
-            # print(data)
+            if store:
+                self.store(data, data.get('writer', 'sample'))
 
-            self.store(data, data.get('writer', 'sample'))
+            self.storage_set.update_flag(p)
 
     def store(self, data, filename):
-        self.storage_set.store(data, filename)
-            # print(f'DataFolder/{filename}.json')
+        self.storage_set.store(data, 'adv_data')
