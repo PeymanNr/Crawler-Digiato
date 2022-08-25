@@ -26,7 +26,8 @@
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
-
+DataFolder
+models.py
 # AWS User-specific
 .idea/**/aws.xml
 
