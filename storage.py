@@ -38,7 +38,6 @@ class FileStorage(StroageAbstract):
     def store(self, data, filename, *args):
         with open(f'DataFolder/{filename}.json', 'w') as f:
             f.write(json.dumps(data))
-            print(f'DataFolder/{filename}.json')
 
     def load(self):
         with open('DataFolder/adv_links.json', 'r') as f:

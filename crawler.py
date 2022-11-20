@@ -1,9 +1,14 @@
-import requests, json
+import queue
+
+import requests
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
 from parser import PageParser
 from storage import MongoStorage, FileStorage
 from config import category_name, storage_neme, LINK
+from queue import Queue
+import threading
+
 
 class CrawlerBase(ABC):
 
@@ -62,8 +67,10 @@ class LinkCrawler(CrawlerBase):
         for cat in self.category:
             links = self.get_category_links(self.link.format(cat))
             list_href.extend(links)
+            print(f'put link to queue')
         if store:
             self.store([{"url": li.get('href'), 'flag': False} for li in list_href])
+
         return list_href
 
     def store(self, data, *args):
@@ -74,19 +81,33 @@ class DataCrawler(CrawlerBase):
     def __init__(self):
         super().__init__()
         self.parser = PageParser()
-        self.link = self.__load_link()
+        # self.link = self.link_queue()
+        self.queue = Queue()
 
-    def __load_link(self):
-        return self.storage_set.load()
-
-    def start(self, store=True):
-        for p in self.link:
-            response = requests.get(p['url'])
+    def get_link(self, store=True):
+        while self.queue.qsize():
+            page = self.queue.get()
+            response = requests.get(page['url'])
             data = self.parser.Parser_links(response.text)
             if store:
-                self.store(data, data.get('writer', 'sample'))
+                self.storage_set.store(data, data.get('writer', 'sample'))
+            if storage_neme == 'mongo':
+                self.storage_set.update_flag(page)
+            self.queue.task_done()
+            print(f'Get Completed:{self.queue.qsize()}')
 
-            self.storage_set.update_flag(p)
+    def start(self):
+        for i in self.storage_set.load():
+            self.queue.put(i)
+
+        threads_list = []
+        for p in range(8):
+            x = threading.Thread(target=self.get_link, args=(p, ))
+            threads_list.append(x)
+            x.start()
+        print(f"All threads Started")
+        self.queue.join()
+        print("All Thread Joined")
 
     def store(self, data, filename):
         self.storage_set.store(data, 'adv_data')
