@@ -1,5 +1,5 @@
 
-![img.png](img.png)
+![digiato.png](digiato.png)
 
 ## Introduction
 **This is a Crawler written in pure python.**
