@@ -49,10 +49,13 @@ SQL_PORT = 0
 
 ### To see all the categories
 ```
-python start.py show_categories
+python config.py category_name
 ```
 
 ### To start crawling:
 ```
-python start.py crawl CATEGORY_NAME
+Step1
+python start.py find_links
+Step2
+python start.py save_data
 ```
